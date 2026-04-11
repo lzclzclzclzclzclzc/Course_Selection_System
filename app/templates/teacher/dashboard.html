@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}教师首页{% endblock %}
+
+{% block content %}
+<h4 class="mb-3">教师首页</h4>
+
+<div class="card mb-3">
+  <div class="card-body row g-3 align-items-end">
+    <div class="col-md-6">
+      <label class="form-label">请选择课程</label>
+      <select id="courseSelect" class="form-select">
+        <option value="">-- 请选择 --</option>
+        {% for c in courses %}
+        <option value="{{ c.id }}">{{ c.course_no }} - {{ c.course_name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-6">
+      <div class="small text-muted">教师：{{ teacher.name }}（{{ teacher.department }}）</div>
+    </div>
+  </div>
+</div>
+
+<ul class="nav nav-tabs mb-3">
+  <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#students">选课学生列表</button></li>
+  <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#grade">成绩录入</button></li>
+  <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#stats">成绩统计</button></li>
+</ul>
+
+<div class="tab-content">
+  <div class="tab-pane fade show active" id="students">
+    <table class="table table-striped" id="studentsTable">
+      <thead><tr><th>学号</th><th>姓名</th><th>院系</th><th>成绩</th></tr></thead>
+      <tbody><tr><td colspan="4" class="text-center text-muted">请选择课程</td></tr></tbody>
+    </table>
+  </div>
+  <div class="tab-pane fade" id="grade">
+    <table class="table table-striped" id="gradeTable">
+      <thead><tr><th>学号</th><th>姓名</th><th>成绩</th><th>操作</th></tr></thead>
+      <tbody><tr><td colspan="4" class="text-center text-muted">请选择课程</td></tr></tbody>
+    </table>
+  </div>
+  <div class="tab-pane fade" id="stats">
+    <div class="row">
+      <div class="col-lg-7">
+        <canvas id="statsChart" height="220"></canvas>
+      </div>
+      <div class="col-lg-5">
+        <div id="statsSummary" class="list-group"></div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script src="{{ url_for('static', filename='js/teacher.js') }}"></script>
+{% endblock %}
+

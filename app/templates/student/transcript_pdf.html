@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>学生成绩单</title>
+  <style>
+    body { font-family: sans-serif; padding: 24px; font-size: 14px; }
+    h2 { margin-bottom: 16px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+    th, td { border: 1px solid #333; padding: 6px; text-align: left; }
+    .meta { margin-bottom: 8px; }
+  </style>
+</head>
+<body>
+  <h2>学生成绩单</h2>
+  <div class="meta">学号：{{ student.student_no }} | 姓名：{{ student.name }} | 所在系：{{ student.department }}</div>
+  <div class="meta">生成时间：{{ generated_at.strftime('%Y-%m-%d %H:%M:%S') }}</div>
+  <table>
+    <thead><tr><th>课程号</th><th>课程名</th><th>成绩</th><th>学分</th><th>任课教师</th></tr></thead>
+    <tbody>
+      {% for row in rows %}
+      <tr>
+        <td>{{ row.course_no }}</td>
+        <td>{{ row.course_name }}</td>
+        <td>{{ row.grade }}</td>
+        <td>{{ row.credit }}</td>
+        <td>{{ row.teacher }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <p>已修课程：{{ stats.course_count }}，总学分：{{ stats.total_credit }}，平均分：{{ stats.avg_grade }}</p>
+</body>
+</html>
+

@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}登录 - 学生选课与成绩管理系统{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6 col-lg-5">
+    <div class="card shadow-sm">
+      <div class="card-body p-4">
+        <h4 class="mb-4 text-center">用户登录</h4>
+        <form method="post" id="loginForm">
+          <div class="mb-3">
+            <label class="form-label">用户名</label>
+            <input class="form-control" name="username" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">密码</label>
+            <input class="form-control" type="password" name="password" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">角色</label>
+            <select class="form-select" name="role" required>
+              <option value="student">学生</option>
+              <option value="teacher">教师</option>
+              <option value="admin">管理员</option>
+            </select>
+          </div>
+          <button class="btn btn-primary w-100" type="submit">登录</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/login.js') }}"></script>
+{% endblock %}
+
