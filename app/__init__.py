@@ -1,17 +1,16 @@
 import logging
+import random
 
 from flask import Flask, flash, redirect, session, url_for
 from flask_login import LoginManager, current_user
 
 from config import Config
 
-from .models import Course, Student, Teacher, User, db
-
-import random
+from .models import Course, CourseSelection, Student, Teacher, User, db
 
 login_manager = LoginManager()
 login_manager.login_view = "auth.login"
-login_manager.login_message = "请先登录。"
+login_manager.login_message = "Please login first."
 
 
 @login_manager.user_loader
@@ -23,67 +22,109 @@ def _register_cli(app: Flask):
     @app.cli.command("init-db")
     def init_db():
         db.create_all()
-        print("数据库表创建完成。")
+        print("Database tables created.")
 
     @app.cli.command("seed-demo")
     def seed_demo():
         db.create_all()
+
         if User.query.filter_by(username="admin").first():
-            print("示例数据已存在，跳过。")
+            print("Demo data already exists. Skip.")
             return
 
         admin = User(username="admin", role="admin")
         admin.set_password("admin123")
+        db.session.add(admin)
 
-        stu_user = User(username="20240001", role="student")
-        stu_user.set_password("123456")
-        tea_user = User(username="T0001", role="teacher")
-        tea_user.set_password("123456")
+        student_users = []
+        teacher_users = []
 
-        db.session.add_all([admin, stu_user, tea_user])
+        for i in range(1, 21):
+            username = f"20240{i:03d}"
+            user = User(username=username, role="student")
+            user.set_password("123456")
+            db.session.add(user)
+            student_users.append(user)
+
+        for i in range(1, 6):
+            username = f"T{i:04d}"
+            user = User(username=username, role="teacher")
+            user.set_password("123456")
+            db.session.add(user)
+            teacher_users.append(user)
+
         db.session.flush()
 
-        student = Student(
-            user_id=stu_user.id,
-            student_no="20240001",
-            name="张三",
-            age=20,
-            gender="男",
-            department="计算机系",
-        )
-        teacher = Teacher(
-            user_id=tea_user.id,
-            teacher_no="T0001",
-            name="李老师",
-            department="计算机系",
-        )
-        db.session.add_all([student, teacher])
+        student_profiles = []
+        for i, user in enumerate(student_users, start=1):
+            profile = Student(
+                user_id=user.id,
+                student_no=user.username,
+                name=f"Student{i}",
+                age=random.randint(18, 23),
+                gender=random.choice(["男", "女"]),
+                department=random.choice(["计算机系", "软件工程系"]),
+            )
+            student_profiles.append(profile)
+        db.session.add_all(student_profiles)
+
+        teacher_profiles = []
+        for i, user in enumerate(teacher_users, start=1):
+            profile = Teacher(
+                user_id=user.id,
+                teacher_no=user.username,
+                name=f"Teacher{i}",
+                department="计算机系",
+            )
+            teacher_profiles.append(profile)
+        db.session.add_all(teacher_profiles)
         db.session.flush()
 
-        db.session.add_all(
-            [
-                Course(
-                    course_no="CS101",
-                    course_name="程序设计基础",
-                    credit=3.0,
-                    department="计算机系",
-                    teacher_id=teacher.id,
-                    max_students=80,
-                ),
-                Course(
-                    course_no="CS201",
-                    course_name="数据库原理",
-                    credit=3.5,
-                    department="计算机系",
-                    teacher_id=teacher.id,
-                    max_students=60,
-                ),
-            ]
-        )
+        course_specs = [
+            ("CS101", "程序设计基础", 3.0),
+            ("CS102", "数据结构", 3.5),
+            ("CS201", "数据库原理", 3.5),
+            ("CS202", "操作系统", 4.0),
+            ("CS301", "计算机网络", 3.0),
+            ("CS302", "编译原理", 4.0),
+            ("CS303", "人工智能导论", 2.5),
+        ]
+        course_objects = []
+        for course_no, course_name, credit in course_specs:
+            course = Course(
+                course_no=course_no,
+                course_name=course_name,
+                credit=credit,
+                department="计算机系",
+                teacher_id=random.choice(teacher_profiles).id,
+                max_students=random.randint(50, 100),
+            )
+            course_objects.append(course)
+        db.session.add_all(course_objects)
+        db.session.flush()
+
+        # Random course selection + random grade for each student.
+        selection_objects = []
+        for student in student_profiles:
+            select_count = random.randint(2, min(5, len(course_objects)))
+            selected_courses = random.sample(course_objects, k=select_count)
+            for course in selected_courses:
+                selection_objects.append(
+                    CourseSelection(
+                        student_id=student.id,
+                        course_id=course.id,
+                        grade=round(random.uniform(55, 100), 2),
+                    )
+                )
+        db.session.add_all(selection_objects)
+
         db.session.commit()
-        print("示例数据创建完成：admin/admin123，学生20240001/123456，教师T0001/123456。")
 
-
+        print("Demo data created.")
+        print("Admin: admin / admin123")
+        print("Students: 20240001-20240020 / 123456")
+        print("Teachers: T0001-T0005 / 123456")
+        print(f"Course selections: {len(selection_objects)} records")
 
 
 def create_app(config_class=Config):
@@ -131,12 +172,13 @@ def create_app(config_class=Config):
 
     @app.errorhandler(401)
     def unauthorized(_):
-        flash("请先登录。", "danger")
+        flash("Please login first.", "danger")
         return redirect(url_for("auth.login"))
 
     @app.errorhandler(403)
     def forbidden(_):
-        flash("你没有权限访问该页面。", "danger")
+        flash("You do not have permission to access this page.", "danger")
         return redirect(url_for("dashboard_redirect"))
 
     return app
+
