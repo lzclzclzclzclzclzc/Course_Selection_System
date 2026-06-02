@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  opengauss:
+    image: enmotech/opengauss-lite:latest
+    container_name: opengauss
+    environment:
+      - GS_PASSWORD=Enmo@123
+      - ALLOW_IP_RANGE=0.0.0.0/0
+    ports:
+      - "5432:5432"
+    volumes:
+      - opengauss_data:/var/lib/opengauss
+      - ./scripts/init_opengauss.sql:/docker-entrypoint-initdb.d/init_opengauss.sql
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "bash", "-c", "exec 6<>/dev/tcp/localhost/5432 && echo 'ok'"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  app:
+    build: .
+    container_name: course-selection-app
+    environment:
+      - USE_OPENGauss=true
+      - DB_HOST=opengauss
+      - DB_PORT=5432
+      - DB_NAME=student_course_db
+      - DB_USER=gaussdb
+      - DB_PASSWORD=Enmo@123
+      - SECRET_KEY=your-secret-key-here-change-in-production
+      - FLASK_DEBUG=0
+    ports:
+      - "5000:5000"
+    depends_on:
+      opengauss:
+        condition: service_healthy
+    networks:
+      - app-network
+
+volumes:
+  opengauss_data:
+
+networks:
+  app-network:
+    driver: bridge

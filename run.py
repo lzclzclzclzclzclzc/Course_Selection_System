@@ -1,8 +1,11 @@
 import os
 
 from app import create_app
+from config import OpenGaussConfig, SQLiteConfig
 
-app = create_app()
+use_opengauss = os.getenv("USE_OPENGauss", "true").lower() == "true"
+config_class = OpenGaussConfig if use_opengauss else SQLiteConfig
+app = create_app(config_class)
 
 if __name__ == "__main__":
     host = os.getenv("FLASK_RUN_HOST", "0.0.0.0")

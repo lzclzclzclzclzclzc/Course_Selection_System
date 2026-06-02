@@ -1,15 +1,13 @@
-import logging
+import os
 import random
+import sys
+from urllib.parse import quote_plus
 
-from flask import Flask, flash, redirect, session, url_for
-from flask_login import LoginManager, current_user
+from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.dialects.postgresql import ENUM as PgEnum
 from werkzeug.security import check_password_hash, generate_password_hash
-
-db = SQLAlchemy()
-login_manager = LoginManager()
-login_manager.login_view = "auth.login"
-login_manager.login_message = "Please login first."
+from datetime import datetime
 
 
 def _patch_opengauss_version():
@@ -31,23 +29,98 @@ def _patch_opengauss_version():
 _patch_opengauss_version()
 
 
-@login_manager.user_loader
-def load_user(user_id):
-    from .models import User
-    return User.query.get(int(user_id))
+app = Flask(__name__)
+
+db_user = os.getenv('DB_USER', 'gaussdb')
+db_password = quote_plus(os.getenv('DB_PASSWORD', 'Enmo@123'))
+db_host = os.getenv('DB_HOST', 'opengauss')
+db_port = os.getenv('DB_PORT', '5432')
+db_name = os.getenv('DB_NAME', 'student_course_db')
+
+app.config['SQLALCHEMY_DATABASE_URI'] = f"postgresql+psycopg2://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+db = SQLAlchemy(app)
+
+role_enum = PgEnum("student", "teacher", "admin", name="role_enum")
+gender_enum = PgEnum("男", "女", name="gender_enum")
 
 
-def _register_cli(app: Flask):
-    @app.cli.command("init-db")
-    def init_db():
-        from .models import Course, CourseSelection, Student, Teacher, User
-        db.create_all()
-        print("Database tables created.")
+class User(db.Model):
+    __tablename__ = "user"
 
-    @app.cli.command("seed-demo")
-    def seed_demo():
-        from .models import Course, CourseSelection, Student, Teacher, User
-        
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(50), unique=True, nullable=False, index=True)
+    password_hash = db.Column(db.String(255), nullable=False)
+    role = db.Column(role_enum, nullable=False, index=True)
+    created_at = db.Column(db.DateTime, default=datetime.now, nullable=False)
+
+    def set_password(self, password: str) -> None:
+        self.password_hash = generate_password_hash(password)
+
+    def check_password(self, password: str) -> bool:
+        return check_password_hash(self.password_hash, password)
+
+
+class Student(db.Model):
+    __tablename__ = "student"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), unique=True, nullable=False)
+    student_no = db.Column(db.String(20), unique=True, nullable=False, index=True)
+    name = db.Column(db.String(50), nullable=False)
+    age = db.Column(db.Integer)
+    gender = db.Column(gender_enum)
+    department = db.Column(db.String(100), nullable=False)
+
+    user = db.relationship("User", backref=db.backref("student", uselist=False))
+
+
+class Teacher(db.Model):
+    __tablename__ = "teacher"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), unique=True, nullable=False)
+    teacher_no = db.Column(db.String(20), unique=True, nullable=False, index=True)
+    name = db.Column(db.String(50), nullable=False)
+    department = db.Column(db.String(100), nullable=False)
+
+    user = db.relationship("User", backref=db.backref("teacher", uselist=False))
+
+
+class Course(db.Model):
+    __tablename__ = "course"
+
+    id = db.Column(db.Integer, primary_key=True)
+    course_no = db.Column(db.String(20), unique=True, nullable=False, index=True)
+    course_name = db.Column(db.String(100), nullable=False)
+    credit = db.Column(db.DECIMAL(3, 1), nullable=False)
+    department = db.Column(db.String(100), nullable=False)
+    teacher_id = db.Column(db.Integer, db.ForeignKey("teacher.id"), nullable=False)
+    max_students = db.Column(db.Integer, default=100, nullable=False)
+
+    teacher = db.relationship("Teacher", backref=db.backref("courses", lazy=True))
+
+
+class CourseSelection(db.Model):
+    __tablename__ = "course_selection"
+
+    id = db.Column(db.Integer, primary_key=True)
+    student_id = db.Column(db.Integer, db.ForeignKey("student.id"), nullable=False)
+    course_id = db.Column(db.Integer, db.ForeignKey("course.id"), nullable=False)
+    grade = db.Column(db.DECIMAL(5, 2), nullable=True)
+    selected_at = db.Column(db.DateTime, default=datetime.now, nullable=False)
+
+    student = db.relationship("Student", backref=db.backref("selections", lazy=True))
+    course = db.relationship("Course", backref=db.backref("selections", lazy=True))
+
+    __table_args__ = (
+        db.UniqueConstraint("student_id", "course_id", name="_student_course_uc"),
+    )
+
+
+def seed_demo():
+    with app.app_context():
         db.create_all()
 
         if User.query.filter_by(username="admin").first():
@@ -143,62 +216,10 @@ def _register_cli(app: Flask):
 
         print("Demo data created.")
         print("Admin: admin / admin123")
-        print("Students: 20240001-20240020 / 123456")
+        print("Students: 2024001-20240020 / 123456")
         print("Teachers: T0001-T0005 / 123456")
         print(f"Course selections: {len(selection_objects)} records")
 
 
-def create_app(config_class):
-    app = Flask(__name__)
-    app.config.from_object(config_class)
-
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s %(levelname)s %(name)s - %(message)s",
-    )
-
-    db.init_app(app)
-    login_manager.init_app(app)
-
-    from .routes.admin import admin_bp
-    from .routes.auth import auth_bp
-    from .routes.student import student_bp
-    from .routes.teacher import teacher_bp
-
-    app.register_blueprint(auth_bp)
-    app.register_blueprint(student_bp)
-    app.register_blueprint(teacher_bp)
-    app.register_blueprint(admin_bp)
-
-    _register_cli(app)
-
-    @app.context_processor
-    def inject_role():
-        role = current_user.role if current_user.is_authenticated else None
-        return {"current_role": role}
-
-    @app.route("/dashboard")
-    def dashboard_redirect():
-        if not current_user.is_authenticated:
-            return redirect(url_for("auth.login"))
-        if current_user.role == "student":
-            return redirect(url_for("student.dashboard"))
-        if current_user.role == "teacher":
-            return redirect(url_for("teacher.dashboard"))
-        return redirect(url_for("admin.dashboard"))
-
-    @app.before_request
-    def make_session_permanent():
-        session.permanent = True
-
-    @app.errorhandler(401)
-    def unauthorized(_):
-        flash("Please login first.", "danger")
-        return redirect(url_for("auth.login"))
-
-    @app.errorhandler(403)
-    def forbidden(_):
-        flash("You do not have permission to access this page.", "danger")
-        return redirect(url_for("dashboard_redirect"))
-
-    return app
+if __name__ == "__main__":
+    seed_demo()

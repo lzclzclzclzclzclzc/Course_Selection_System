@@ -1,10 +1,13 @@
 from datetime import datetime
 
 from flask_login import UserMixin
-from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.dialects.postgresql import ENUM as PgEnum
 from werkzeug.security import check_password_hash, generate_password_hash
 
-db = SQLAlchemy()
+from . import db
+
+role_enum = PgEnum("student", "teacher", "admin", name="role_enum")
+gender_enum = PgEnum("男", "女", name="gender_enum")
 
 
 class User(UserMixin, db.Model):
@@ -13,7 +16,7 @@ class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50), unique=True, nullable=False, index=True)
     password_hash = db.Column(db.String(255), nullable=False)
-    role = db.Column(db.Enum("student", "teacher", "admin"), nullable=False, index=True)
+    role = db.Column(role_enum, nullable=False, index=True)
     created_at = db.Column(db.DateTime, default=datetime.now, nullable=False)
 
     def set_password(self, password: str) -> None:
@@ -31,7 +34,7 @@ class Student(db.Model):
     student_no = db.Column(db.String(20), unique=True, nullable=False, index=True)
     name = db.Column(db.String(50), nullable=False)
     age = db.Column(db.Integer)
-    gender = db.Column(db.Enum("男", "女"))
+    gender = db.Column(gender_enum)
     department = db.Column(db.String(100), nullable=False)
 
     user = db.relationship("User", backref=db.backref("student", uselist=False))
