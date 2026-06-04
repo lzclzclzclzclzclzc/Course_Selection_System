@@ -91,3 +91,40 @@ courseSelect?.addEventListener("change", async () => {
   await loadStats(courseSelect.value);
 });
 
+
+
+const syllabusText = document.getElementById("syllabusText");
+const saveSyllabusBtn = document.getElementById("saveSyllabusBtn");
+
+async function loadSyllabus(courseId) {
+  if (!syllabusText) return;
+  const res = await fetch("/teacher/load_syllabus", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ course_id: Number(courseId) }),
+  });
+  const data = await res.json();
+  syllabusText.value = data.syllabus || "";
+}
+
+saveSyllabusBtn?.addEventListener("click", async () => {
+  if (!courseSelect.value) {
+    alert("请先选择课程");
+    return;
+  }
+  const res = await fetch("/teacher/save_syllabus", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      course_id: Number(courseSelect.value),
+      syllabus: syllabusText.value,
+    }),
+  });
+  const data = await res.json();
+  alert(data.message || "保存完成");
+});
+
+courseSelect?.addEventListener("change", async () => {
+  if (!courseSelect.value) return;
+  await loadSyllabus(courseSelect.value);
+});

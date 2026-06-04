@@ -24,3 +24,14 @@ document.querySelectorAll(".action-btn").forEach((btn) => {
   });
 });
 
+
+
+const syllabusModal = document.getElementById("syllabusModal");
+syllabusModal?.addEventListener("show.bs.modal", (event) => {
+  const trigger = event.relatedTarget;
+  if (!trigger) return;
+  const title = document.getElementById("syllabusModalTitle");
+  const body = document.getElementById("syllabusModalBody");
+  title.textContent = (trigger.dataset.courseName || "课程") + " — 大纲";
+  body.textContent = trigger.dataset.syllabus || "（暂未填写大纲）";
+});

@@ -78,6 +78,40 @@ def save_grade():
     return jsonify({"success": True, "message": "保存成功。"})
 
 
+@teacher_bp.route("/save_syllabus", methods=["POST"])
+@login_required
+@role_required("teacher")
+def save_syllabus():
+    teacher = _teacher()
+    course_id = request.form.get("course_id") or (request.json or {}).get("course_id")
+    syllabus = request.form.get("syllabus") or (request.json or {}).get("syllabus", "")
+
+    if not course_id:
+        return jsonify({"success": False, "message": "参数不完整。"}), 400
+
+    course = Course.query.get(course_id)
+    if not course or course.teacher_id != teacher.id:
+        return jsonify({"success": False, "message": "无权操作该课程。"}), 403
+
+    course.syllabus = syllabus or ""
+    db.session.commit()
+    return jsonify({"success": True, "message": "大纲已保存。"})
+
+
+@teacher_bp.route("/load_syllabus", methods=["POST"])
+@login_required
+@role_required("teacher")
+def load_syllabus():
+    teacher = _teacher()
+    course_id = request.form.get("course_id") or (request.json or {}).get("course_id")
+    if not course_id:
+        return jsonify({"syllabus": ""})
+    course = Course.query.get(course_id)
+    if not course or course.teacher_id != teacher.id:
+        return jsonify({"syllabus": ""}), 403
+    return jsonify({"syllabus": course.syllabus or ""})
+
+
 @teacher_bp.route("/statistics")
 @login_required
 @role_required("teacher")

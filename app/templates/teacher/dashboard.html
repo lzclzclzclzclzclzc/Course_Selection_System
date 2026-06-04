@@ -25,6 +25,7 @@
   <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#students">选课学生列表</button></li>
   <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#grade">成绩录入</button></li>
   <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#stats">成绩统计</button></li>
+  <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#syllabus">课程大纲</button></li>
 </ul>
 
 <div class="tab-content">
@@ -49,6 +50,11 @@
         <div id="statsSummary" class="list-group"></div>
       </div>
     </div>
+  </div>
+  <div class="tab-pane fade" id="syllabus">
+    <div class="mb-2 small text-muted">先在上方选择课程，然后编辑大纲。</div>
+    <textarea id="syllabusText" class="form-control mb-2" rows="12" placeholder="请选择课程后填写大纲"></textarea>
+    <button id="saveSyllabusBtn" class="btn btn-primary">保存大纲</button>
   </div>
 </div>
 {% endblock %}

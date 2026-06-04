@@ -11,10 +11,11 @@ def ensure_academic_schema():
 
     if _table_exists("course"):
         column_sql = {
-            "semester_id": "ALTER TABLE course ADD COLUMN IF NOT EXISTS semester_id INTEGER",
-            "course_type": "ALTER TABLE course ADD COLUMN IF NOT EXISTS course_type VARCHAR(20) DEFAULT 'required' NOT NULL",
-            "current_students": "ALTER TABLE course ADD COLUMN IF NOT EXISTS current_students INTEGER DEFAULT 0 NOT NULL",
-            "status": "ALTER TABLE course ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'open' NOT NULL",
+            "semester_id": "ALTER TABLE course ADD COLUMN semester_id INTEGER",
+            "course_type": "ALTER TABLE course ADD COLUMN course_type VARCHAR(20) DEFAULT 'required' NOT NULL",
+            "current_students": "ALTER TABLE course ADD COLUMN current_students INTEGER DEFAULT 0 NOT NULL",
+            "status": "ALTER TABLE course ADD COLUMN status VARCHAR(20) DEFAULT 'open' NOT NULL",
+            "syllabus": "ALTER TABLE course ADD COLUMN syllabus TEXT DEFAULT '' NOT NULL",
         }
         for column, ddl in column_sql.items():
             if not _column_exists("course", column):

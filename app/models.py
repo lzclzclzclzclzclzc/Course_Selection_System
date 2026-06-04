@@ -86,6 +86,7 @@ class Course(db.Model):
     max_students = db.Column(db.Integer, default=100, nullable=False)
     current_students = db.Column(db.Integer, default=0, nullable=False)
     status = db.Column(db.String(20), default="open", nullable=False)
+    syllabus = db.Column(db.Text, default="", nullable=False)
 
     selections = db.relationship(
         "CourseSelection",

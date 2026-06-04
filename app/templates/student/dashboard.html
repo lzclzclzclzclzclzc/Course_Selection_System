@@ -37,7 +37,7 @@
             <td>{{ c.credit }}</td>
             <td>{{ c.department }}</td>
             <td>{{ c.teacher.name }}</td>
-            <td><button class="btn btn-sm btn-primary action-btn" data-action="select" data-course-id="{{ c.id }}">选课</button></td>
+            <td><button class="btn btn-sm btn-outline-info me-1" type="button" data-bs-toggle="modal" data-bs-target="#syllabusModal" data-syllabus="{{ c.syllabus|e }}" data-course-name="{{ c.course_name|e }}">大纲</button><button class="btn btn-sm btn-primary action-btn" data-action="select" data-course-id="{{ c.id }}">选课</button></td>
           </tr>
           {% else %}
           <tr><td colspan="6" class="text-center text-muted">暂无可选课程</td></tr>
@@ -87,6 +87,18 @@
           {% endfor %}
         </tbody>
       </table>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="syllabusModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="syllabusModalTitle">课程大纲</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body"><pre id="syllabusModalBody" style="white-space: pre-wrap; font-family: inherit;"></pre></div>
     </div>
   </div>
 </div>
