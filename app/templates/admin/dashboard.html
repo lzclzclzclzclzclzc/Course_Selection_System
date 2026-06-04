@@ -28,6 +28,7 @@
     </div>
 
     <h5 class="mt-4">学生选课情况</h5>
+    <div class="mb-3"><canvas id="enrollChart" height="80"></canvas></div>
     <div class="table-responsive mb-4">
       <table class="table table-striped align-middle">
         <thead><tr><th>学期</th><th>课程号</th><th>课程名</th><th>人数</th><th>容量</th><th>平均分</th></tr></thead>
@@ -49,6 +50,7 @@
     </div>
 
     <h5>教师授课情况</h5>
+    <div class="mb-3"><canvas id="teachingChart" height="80"></canvas></div>
     <div class="table-responsive mb-4">
       <table class="table table-striped align-middle">
         <thead><tr><th>工号</th><th>教师</th><th>授课门数</th><th>选课学生人次</th></tr></thead>
@@ -65,6 +67,7 @@
     <div class="row g-4">
       <div class="col-lg-6">
         <h5>成绩分布</h5>
+        <div class="mb-3"><canvas id="gradeChart" height="160"></canvas></div>
         <div class="table-responsive">
           <table class="table table-striped align-middle">
             <thead><tr><th>课程</th><th>0-59</th><th>60-69</th><th>70-79</th><th>80-89</th><th>90-100</th></tr></thead>
@@ -87,6 +90,7 @@
       </div>
       <div class="col-lg-6">
         <h5>学生学分完成情况</h5>
+        <div class="mb-3"><canvas id="creditChart" height="160"></canvas></div>
         <div class="table-responsive">
           <table class="table table-striped align-middle">
             <thead><tr><th>学号</th><th>姓名</th><th>已获学分</th><th>平均分</th></tr></thead>
@@ -264,4 +268,47 @@
     </div>
   </div>
 </div>
+
+<script id="adminStatsData" type="application/json">
+{
+  "courses": [
+    {% for row in stats.courses %}
+    {
+      "label": "{{ row.course_no }} {{ row.course_name }}",
+      "selected": {{ row.selected_count or 0 }},
+      "capacity": {{ row.max_students or 0 }},
+      "avg": {{ "%.2f"|format(row.avg_grade) if row.avg_grade is not none else 0 }}
+    }{% if not loop.last %},{% endif %}
+    {% endfor %}
+  ],
+  "teachers": [
+    {% for row in stats.teachers %}
+    {"label": "{{ row.name }}", "course_count": {{ row.course_count or 0 }}, "student_count": {{ row.student_count or 0 }}}{% if not loop.last %},{% endif %}
+    {% endfor %}
+  ],
+  "grades": [
+    {% for row in stats.grades %}
+    {
+      "label": "{{ row.course_no }}",
+      "fail": {{ row.fail_count or 0 }},
+      "pass": {{ row.pass_count or 0 }},
+      "mid": {{ row.mid_count or 0 }},
+      "good": {{ row.good_count or 0 }},
+      "excellent": {{ row.excellent_count or 0 }}
+    }{% if not loop.last %},{% endif %}
+    {% endfor %}
+  ],
+  "credits": [
+    {% for row in stats.credits %}
+    {"label": "{{ row.student_no }}", "credits": {{ row.completed_credits or 0 }}, "avg": {{ "%.2f"|format(row.avg_grade) if row.avg_grade is not none else 0 }}}{% if not loop.last %},{% endif %}
+    {% endfor %}
+  ]
+}
+</script>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script src="{{ url_for('static', filename='js/admin.js') }}"></script>
 {% endblock %}
