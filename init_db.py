@@ -9,19 +9,22 @@ from app.utils.db_objects import ensure_academic_schema
 
 def seed_demo():
     with app.app_context():
+        db.create_all()
         ensure_academic_schema()
 
         if User.query.filter_by(username="admin").first():
             print("Demo data already exists. Schema and database objects were checked.")
             return
 
-        spring = Semester(
-            name="2025-2026 Spring",
-            start_date=date(2026, 2, 24),
-            end_date=date(2026, 7, 5),
-            is_active=True,
-        )
-        db.session.add(spring)
+        spring = Semester.query.filter_by(name="2025-2026 Spring").first()
+        if spring is None:
+            spring = Semester(
+                name="2025-2026 Spring",
+                start_date=date(2026, 2, 24),
+                end_date=date(2026, 7, 5),
+                is_active=True,
+            )
+            db.session.add(spring)
 
         admin = User(username="admin", role="admin")
         admin.set_password("admin123")

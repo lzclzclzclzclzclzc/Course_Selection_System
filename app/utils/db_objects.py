@@ -151,11 +151,11 @@ def _ensure_opengauss_objects():
         """,
         """
         CREATE OR REPLACE PROCEDURE calculate_student_average_grade(
-            IN p_student_id INTEGER,
-            OUT p_avg_grade NUMERIC,
-            OUT p_total_credit NUMERIC
+            p_student_id IN INTEGER,
+            p_avg_grade OUT NUMERIC,
+            p_total_credit OUT NUMERIC
         )
-        AS $$
+        IS
         BEGIN
             SELECT
                 COALESCE(ROUND(SUM(cs.grade * c.credit) / NULLIF(SUM(c.credit), 0), 2), 0),
@@ -166,7 +166,6 @@ def _ensure_opengauss_objects():
             WHERE cs.student_id = p_student_id
               AND cs.grade IS NOT NULL;
         END;
-        $$ LANGUAGE plpgsql
         """,
     ]
     for statement in statements:
