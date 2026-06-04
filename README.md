@@ -1,6 +1,6 @@
 # 学生选课与成绩管理系统
 
-基于 Flask 的学生选课与成绩管理系统，支持 SQLite 和 OpenGauss 双数据库模式，可通过 Docker 快速部署。
+基于 Flask 的学生选课与成绩管理系统，支持 SQLite 和 OpenGauss 两种数据库模式，可通过 Docker 快速部署。
 
 ## 一、系统要求
 
