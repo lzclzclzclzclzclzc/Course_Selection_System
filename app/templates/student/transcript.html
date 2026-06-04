@@ -43,5 +43,57 @@
   <div class="col-md-4"><div class="stat-card">总学分：{{ stats.total_credit }}</div></div>
   <div class="col-md-4"><div class="stat-card">平均分：{{ stats.avg_grade }}</div></div>
 </div>
+
+<div class="card mt-4">
+  <div class="card-header">成绩可视化</div>
+  <div class="card-body"><canvas id="gradeBarChart" height="100"></canvas></div>
+</div>
+
+<script id="transcriptData" type="application/json">
+{
+  "rows": [
+    {% for row in rows %}
+    {"course": "{{ row.course_no }} {{ row.course_name }}", "grade": {{ row.grade or 0 }}, "credit": {{ row.credit or 0 }}}{% if not loop.last %},{% endif %}
+    {% endfor %}
+  ]
+}
+</script>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script>
+(function () {
+  const dataEl = document.getElementById("transcriptData");
+  if (!dataEl) return;
+  const data = JSON.parse(dataEl.textContent);
+  const el = document.getElementById("gradeBarChart");
+  if (!el || !data.rows.length) return;
+  new Chart(el, {
+    type: "bar",
+    data: {
+      labels: data.rows.map((r) => r.course),
+      datasets: [
+        {
+          label: "成绩",
+          data: data.rows.map((r) => r.grade),
+          backgroundColor: data.rows.map((r) => {
+            if (r.grade >= 90) return "rgba(13, 110, 253, 0.7)";
+            if (r.grade >= 80) return "rgba(25, 135, 84, 0.7)";
+            if (r.grade >= 70) return "rgba(13, 202, 240, 0.7)";
+            if (r.grade >= 60) return "rgba(255, 193, 7, 0.7)";
+            return "rgba(220, 53, 69, 0.7)";
+          }),
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: true, max: 100 } },
+    },
+  });
+})();
+</script>
 {% endblock %}
 
