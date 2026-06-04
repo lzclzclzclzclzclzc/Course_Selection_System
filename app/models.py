@@ -109,3 +109,16 @@ class CourseSelection(db.Model):
         db.UniqueConstraint("student_id", "course_id", name="_student_course_uc"),
         db.Index("idx_course_selection_student_course", "student_id", "course_id"),
     )
+
+
+class LessonProgress(db.Model):
+    __tablename__ = "lesson_progress"
+
+    id = db.Column(db.Integer, primary_key=True)
+    course_id = db.Column(db.Integer, db.ForeignKey("course.id"), nullable=False, index=True)
+    week = db.Column(db.Integer, nullable=False)
+    topic = db.Column(db.String(200), nullable=False)
+    note = db.Column(db.Text, default="", nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.now, nullable=False)
+
+    course = db.relationship("Course", backref=db.backref("lessons", lazy=True, cascade="all, delete-orphan", order_by="LessonProgress.week"))

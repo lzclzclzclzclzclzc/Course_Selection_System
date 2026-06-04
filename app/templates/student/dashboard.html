@@ -59,7 +59,7 @@
             <td>{{ s.course.credit }}</td>
             <td>{{ s.course.department }}</td>
             <td>{{ s.course.teacher.name }}</td>
-            <td><button class="btn btn-sm btn-outline-danger action-btn" data-action="drop" data-course-id="{{ s.course.id }}">退课</button></td>
+            <td><button class="btn btn-sm btn-outline-secondary me-1 lesson-btn" type="button" data-course-id="{{ s.course.id }}" data-course-name="{{ s.course.course_name|e }}">教学进度</button><button class="btn btn-sm btn-outline-danger action-btn" data-action="drop" data-course-id="{{ s.course.id }}">退课</button></td>
           </tr>
           {% else %}
           <tr><td colspan="6" class="text-center text-muted">暂无已选课程</td></tr>
@@ -99,6 +99,23 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body"><pre id="syllabusModalBody" style="white-space: pre-wrap; font-family: inherit;"></pre></div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="lessonsModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="lessonsModalTitle">教学进度</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <table class="table table-sm" id="lessonsModalTable">
+          <thead><tr><th>周次</th><th>主题</th><th>备注</th></tr></thead>
+          <tbody><tr><td colspan="3" class="text-center text-muted">加载中…</td></tr></tbody>
+        </table>
+      </div>
     </div>
   </div>
 </div>

@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify, render_template, request
 from flask_login import current_user, login_required
 
-from app.models import Course, CourseSelection, db
+from app.models import Course, CourseSelection, LessonProgress, db
 from app.utils.auth import role_required
 
 teacher_bp = Blueprint("teacher", __name__, url_prefix="/teacher")
@@ -110,6 +110,74 @@ def load_syllabus():
     if not course or course.teacher_id != teacher.id:
         return jsonify({"syllabus": ""}), 403
     return jsonify({"syllabus": course.syllabus or ""})
+
+
+@teacher_bp.route("/lessons", methods=["POST"])
+@login_required
+@role_required("teacher")
+def list_lessons():
+    teacher = _teacher()
+    course_id = request.form.get("course_id") or (request.json or {}).get("course_id")
+    if not course_id:
+        return jsonify({"lessons": []})
+    course = Course.query.get(course_id)
+    if not course or course.teacher_id != teacher.id:
+        return jsonify({"lessons": []}), 403
+    lessons = LessonProgress.query.filter_by(course_id=course.id).order_by(LessonProgress.week).all()
+    return jsonify({"lessons": [
+        {"id": l.id, "week": l.week, "topic": l.topic, "note": l.note}
+        for l in lessons
+    ]})
+
+
+@teacher_bp.route("/lesson/save", methods=["POST"])
+@login_required
+@role_required("teacher")
+def save_lesson():
+    teacher = _teacher()
+    payload = request.json or {}
+    course_id = request.form.get("course_id") or payload.get("course_id")
+    week = request.form.get("week") or payload.get("week")
+    topic = (request.form.get("topic") or payload.get("topic") or "").strip()
+    note = request.form.get("note") or payload.get("note") or ""
+    lesson_id = request.form.get("id") or payload.get("id")
+
+    if not course_id or week is None or not topic:
+        return jsonify({"success": False, "message": "请填写周次和主题。"}), 400
+    try:
+        week = int(week)
+    except (TypeError, ValueError):
+        return jsonify({"success": False, "message": "周次必须为整数。"}), 400
+
+    course = Course.query.get(course_id)
+    if not course or course.teacher_id != teacher.id:
+        return jsonify({"success": False, "message": "无权操作该课程。"}), 403
+
+    if lesson_id:
+        lesson = LessonProgress.query.get(lesson_id)
+        if not lesson or lesson.course_id != course.id:
+            return jsonify({"success": False, "message": "记录不存在。"}), 404
+        lesson.week = week
+        lesson.topic = topic
+        lesson.note = note
+    else:
+        lesson = LessonProgress(course_id=course.id, week=week, topic=topic, note=note)
+        db.session.add(lesson)
+    db.session.commit()
+    return jsonify({"success": True, "message": "保存成功。", "id": lesson.id})
+
+
+@teacher_bp.route("/lesson/<int:lesson_id>/delete", methods=["POST"])
+@login_required
+@role_required("teacher")
+def delete_lesson(lesson_id):
+    teacher = _teacher()
+    lesson = LessonProgress.query.get_or_404(lesson_id)
+    if lesson.course.teacher_id != teacher.id:
+        return jsonify({"success": False, "message": "无权操作。"}), 403
+    db.session.delete(lesson)
+    db.session.commit()
+    return jsonify({"success": True, "message": "已删除。"})
 
 
 @teacher_bp.route("/statistics")

@@ -26,6 +26,7 @@
   <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#grade">成绩录入</button></li>
   <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#stats">成绩统计</button></li>
   <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#syllabus">课程大纲</button></li>
+  <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#lessons">教学进度</button></li>
 </ul>
 
 <div class="tab-content">
@@ -55,6 +56,20 @@
     <div class="mb-2 small text-muted">先在上方选择课程，然后编辑大纲。</div>
     <textarea id="syllabusText" class="form-control mb-2" rows="12" placeholder="请选择课程后填写大纲"></textarea>
     <button id="saveSyllabusBtn" class="btn btn-primary">保存大纲</button>
+  </div>
+  <div class="tab-pane fade" id="lessons">
+    <div class="mb-2 small text-muted">先在上方选择课程，记录每周教学进度。</div>
+    <form id="lessonForm" class="row g-2 align-items-end mb-3">
+      <input type="hidden" id="lessonId">
+      <div class="col-md-2"><label class="form-label">周次</label><input type="number" id="lessonWeek" class="form-control" min="1" max="30" required></div>
+      <div class="col-md-4"><label class="form-label">主题</label><input type="text" id="lessonTopic" class="form-control" maxlength="200" required></div>
+      <div class="col-md-4"><label class="form-label">备注</label><input type="text" id="lessonNote" class="form-control" maxlength="500"></div>
+      <div class="col-md-2"><button class="btn btn-primary w-100" type="submit">保存</button></div>
+    </form>
+    <table class="table table-striped" id="lessonsTable">
+      <thead><tr><th>周次</th><th>主题</th><th>备注</th><th>操作</th></tr></thead>
+      <tbody><tr><td colspan="4" class="text-center text-muted">请选择课程</td></tr></tbody>
+    </table>
   </div>
 </div>
 {% endblock %}

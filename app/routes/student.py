@@ -1,7 +1,7 @@
 ﻿from flask import Blueprint, flash, jsonify, redirect, render_template, request, send_file, url_for
 from flask_login import current_user, login_required
 
-from app.models import Course, CourseSelection, db
+from app.models import Course, CourseSelection, LessonProgress, db
 from app.utils.auth import role_required
 from app.utils.exporters import build_transcript_rows, export_transcript_excel, export_transcript_pdf
 
@@ -81,6 +81,25 @@ def drop_course():
     db.session.delete(selection)
     db.session.commit()
     return jsonify({"success": True, "message": "drop course success"})
+
+
+@student_bp.route("/lessons", methods=["POST"])
+@login_required
+@role_required("student")
+def view_lessons():
+    student = _current_student()
+    payload = request.json or {}
+    course_id = request.form.get("course_id") or payload.get("course_id")
+    if not course_id:
+        return jsonify({"lessons": []})
+    selected = CourseSelection.query.filter_by(student_id=student.id, course_id=course_id).first()
+    if not selected:
+        return jsonify({"lessons": []}), 403
+    lessons = LessonProgress.query.filter_by(course_id=course_id).order_by(LessonProgress.week).all()
+    return jsonify({"lessons": [
+        {"week": l.week, "topic": l.topic, "note": l.note}
+        for l in lessons
+    ]})
 
 
 @student_bp.route("/transcript")

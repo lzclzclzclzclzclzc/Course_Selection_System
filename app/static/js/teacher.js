@@ -128,3 +128,86 @@ courseSelect?.addEventListener("change", async () => {
   if (!courseSelect.value) return;
   await loadSyllabus(courseSelect.value);
 });
+
+
+const lessonsTableBody = document.querySelector("#lessonsTable tbody");
+const lessonForm = document.getElementById("lessonForm");
+const lessonId = document.getElementById("lessonId");
+const lessonWeek = document.getElementById("lessonWeek");
+const lessonTopic = document.getElementById("lessonTopic");
+const lessonNote = document.getElementById("lessonNote");
+
+async function loadLessons(courseId) {
+  if (!lessonsTableBody) return;
+  const res = await fetch("/teacher/lessons", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ course_id: Number(courseId) }),
+  });
+  const data = await res.json();
+  if (!data.lessons || !data.lessons.length) {
+    lessonsTableBody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">暂无记录</td></tr>';
+    return;
+  }
+  lessonsTableBody.innerHTML = data.lessons.map((l) => `
+    <tr data-id="${l.id}">
+      <td>${l.week}</td>
+      <td>${escapeHtml(l.topic)}</td>
+      <td>${escapeHtml(l.note || "")}</td>
+      <td>
+        <button class="btn btn-sm btn-outline-primary me-1" onclick="editLesson(${l.id}, ${l.week}, ${JSON.stringify(l.topic)}, ${JSON.stringify(l.note || "")})">编辑</button>
+        <button class="btn btn-sm btn-outline-danger" onclick="deleteLesson(${l.id})">删除</button>
+      </td>
+    </tr>
+  `).join("");
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+
+window.editLesson = function(id, week, topic, note) {
+  lessonId.value = id;
+  lessonWeek.value = week;
+  lessonTopic.value = topic;
+  lessonNote.value = note;
+};
+
+window.deleteLesson = async function(id) {
+  if (!confirm("确认删除该周记录？")) return;
+  const res = await fetch(`/teacher/lesson/${id}/delete`, { method: "POST" });
+  const data = await res.json();
+  alert(data.message || "");
+  if (data.success && courseSelect.value) await loadLessons(courseSelect.value);
+};
+
+lessonForm?.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  if (!courseSelect.value) {
+    alert("请先选择课程");
+    return;
+  }
+  const res = await fetch("/teacher/lesson/save", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      id: lessonId.value || null,
+      course_id: Number(courseSelect.value),
+      week: Number(lessonWeek.value),
+      topic: lessonTopic.value,
+      note: lessonNote.value,
+    }),
+  });
+  const data = await res.json();
+  alert(data.message || "");
+  if (data.success) {
+    lessonForm.reset();
+    lessonId.value = "";
+    await loadLessons(courseSelect.value);
+  }
+});
+
+courseSelect?.addEventListener("change", async () => {
+  if (!courseSelect.value) return;
+  await loadLessons(courseSelect.value);
+});

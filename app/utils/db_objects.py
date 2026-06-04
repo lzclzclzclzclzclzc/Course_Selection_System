@@ -8,6 +8,7 @@ from app.models import Course, CourseSelection, Semester
 
 def ensure_academic_schema():
     _ensure_semester_table()
+    _ensure_lesson_progress_table()
 
     if _table_exists("course"):
         column_sql = {
@@ -71,6 +72,24 @@ def _ensure_semester_table():
                 start_date DATE,
                 end_date DATE,
                 is_active BOOLEAN NOT NULL DEFAULT FALSE,
+                created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+            )
+            """
+        )
+    )
+    db.session.commit()
+
+
+def _ensure_lesson_progress_table():
+    db.session.execute(
+        text(
+            """
+            CREATE TABLE IF NOT EXISTS lesson_progress (
+                id SERIAL PRIMARY KEY,
+                course_id INTEGER NOT NULL REFERENCES course(id) ON DELETE CASCADE,
+                week INTEGER NOT NULL,
+                topic VARCHAR(200) NOT NULL,
+                note TEXT NOT NULL DEFAULT '',
                 created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
             )
             """
