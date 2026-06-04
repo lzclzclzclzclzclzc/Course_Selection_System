@@ -59,6 +59,19 @@ class Teacher(db.Model):
     courses = db.relationship("Course", backref="teacher", lazy=True, cascade="all, delete-orphan")
 
 
+class Semester(db.Model):
+    __tablename__ = "semester"
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(50), unique=True, nullable=False, index=True)
+    start_date = db.Column(db.Date)
+    end_date = db.Column(db.Date)
+    is_active = db.Column(db.Boolean, default=False, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.now, nullable=False)
+
+    courses = db.relationship("Course", backref="semester", lazy=True)
+
+
 class Course(db.Model):
     __tablename__ = "course"
 
@@ -68,7 +81,11 @@ class Course(db.Model):
     credit = db.Column(db.DECIMAL(3, 1), nullable=False)
     department = db.Column(db.String(100), nullable=False)
     teacher_id = db.Column(db.Integer, db.ForeignKey("teacher.id"), nullable=False)
+    semester_id = db.Column(db.Integer, db.ForeignKey("semester.id"), nullable=True, index=True)
+    course_type = db.Column(db.String(20), default="required", nullable=False)
     max_students = db.Column(db.Integer, default=100, nullable=False)
+    current_students = db.Column(db.Integer, default=0, nullable=False)
+    status = db.Column(db.String(20), default="open", nullable=False)
 
     selections = db.relationship(
         "CourseSelection",

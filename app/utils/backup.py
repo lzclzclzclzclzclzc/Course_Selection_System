@@ -2,7 +2,7 @@ import json
 from datetime import datetime
 from io import BytesIO
 
-from app.models import Course, CourseSelection, Student, Teacher, User
+from app.models import Course, CourseSelection, Semester, Student, Teacher, User
 
 
 def _serialize_model(items, fields):
@@ -30,9 +30,25 @@ def build_backup_file():
             Teacher.query.all(),
             ["id", "user_id", "teacher_no", "name", "department"],
         ),
+        "semester": _serialize_model(
+            Semester.query.all(),
+            ["id", "name", "start_date", "end_date", "is_active", "created_at"],
+        ),
         "course": _serialize_model(
             Course.query.all(),
-            ["id", "course_no", "course_name", "credit", "department", "teacher_id", "max_students"],
+            [
+                "id",
+                "course_no",
+                "course_name",
+                "credit",
+                "department",
+                "teacher_id",
+                "semester_id",
+                "course_type",
+                "max_students",
+                "current_students",
+                "status",
+            ],
         ),
         "course_selection": _serialize_model(
             CourseSelection.query.all(),
@@ -43,4 +59,3 @@ def build_backup_file():
     output.write(json.dumps(data, ensure_ascii=False, indent=2, default=str).encode("utf-8"))
     output.seek(0)
     return output
-

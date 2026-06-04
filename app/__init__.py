@@ -40,15 +40,18 @@ def load_user(user_id):
 def _register_cli(app: Flask):
     @app.cli.command("init-db")
     def init_db():
-        from .models import Course, CourseSelection, Student, Teacher, User
-        db.create_all()
+        from .models import Course, CourseSelection, Semester, Student, Teacher, User
+        from .utils.db_objects import ensure_academic_schema
+
+        ensure_academic_schema()
         print("Database tables created.")
 
     @app.cli.command("seed-demo")
     def seed_demo():
-        from .models import Course, CourseSelection, Student, Teacher, User
+        from .models import Course, CourseSelection, Semester, Student, Teacher, User
+        from .utils.db_objects import ensure_academic_schema
         
-        db.create_all()
+        ensure_academic_schema()
 
         if User.query.filter_by(username="admin").first():
             print("Demo data already exists. Skip.")
@@ -171,6 +174,14 @@ def create_app(config_class):
     app.register_blueprint(admin_bp)
 
     _register_cli(app)
+
+    with app.app_context():
+        try:
+            from .utils.db_objects import ensure_academic_schema
+
+            ensure_academic_schema()
+        except Exception:
+            app.logger.exception("Failed to ensure academic database schema.")
 
     @app.context_processor
     def inject_role():
