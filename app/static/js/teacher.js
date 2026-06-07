@@ -155,7 +155,7 @@ async function loadLessons(courseId) {
       <td>${escapeHtml(l.topic)}</td>
       <td>${escapeHtml(l.note || "")}</td>
       <td>
-        <button class="btn btn-sm btn-outline-primary me-1" onclick="editLesson(${l.id}, ${l.week}, ${JSON.stringify(l.topic)}, ${JSON.stringify(l.note || "")})">编辑</button>
+        <button class="btn btn-sm btn-outline-primary me-1" onclick="editLesson(${l.id}, ${l.week}, '${escapeHtml(l.topic)}', '${escapeHtml(l.note || "")}')">编辑</button>
         <button class="btn btn-sm btn-outline-danger" onclick="deleteLesson(${l.id})">删除</button>
       </td>
     </tr>
