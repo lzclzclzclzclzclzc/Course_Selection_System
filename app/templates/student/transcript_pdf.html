@@ -4,10 +4,10 @@
   <meta charset="utf-8">
   <title>学生成绩单</title>
   <style>
-    body { font-family: sans-serif; padding: 24px; font-size: 14px; }
+    body { font-family: {{ font_family }}, sans-serif; padding: 24px; font-size: 14px; }
     h2 { margin-bottom: 16px; }
     table { width: 100%; border-collapse: collapse; margin-top: 12px; }
-    th, td { border: 1px solid #333; padding: 6px; text-align: left; }
+    th, td { border: 1px solid #333; padding: 6px; text-align: left; font-family: {{ font_family }}, sans-serif; }
     .meta { margin-bottom: 8px; }
   </style>
 </head>

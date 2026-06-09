@@ -55,9 +55,27 @@ def export_transcript_excel(student, rows):
 
 def export_transcript_pdf(student, rows, stats):
     try:
-        from weasyprint import HTML
-    except Exception as exc:
-        raise RuntimeError("当前环境未安装或无法加载 WeasyPrint，无法导出 PDF。") from exc
+        from xhtml2pdf import pisa
+        from reportlab.pdfbase import pdfmetrics
+        from reportlab.pdfbase.ttfonts import TTFont
+        import os
+    except ImportError as exc:
+        raise RuntimeError("当前环境未安装 xhtml2pdf，无法导出 PDF。") from exc
+
+    fonts_to_try = [
+        ("SimHei", "C:/Windows/Fonts/simhei.ttf"),
+        ("SimSun", "C:/Windows/Fonts/simsunb.ttf"),
+        ("SimFang", "C:/Windows/Fonts/simfang.ttf"),
+        ("SimKai", "C:/Windows/Fonts/simkai.ttf"),
+        ("SimSun-Ext", "C:/Windows/Fonts/SimsunExtG.ttf"),
+    ]
+
+    registered_font = None
+    for font_name, font_path in fonts_to_try:
+        if os.path.exists(font_path):
+            pdfmetrics.registerFont(TTFont(font_name, font_path))
+            registered_font = font_name
+            break
 
     html = render_template(
         "student/transcript_pdf.html",
@@ -65,7 +83,10 @@ def export_transcript_pdf(student, rows, stats):
         rows=rows,
         stats=stats,
         generated_at=datetime.now(),
+        font_family=registered_font or "SimHei",
     )
-    pdf_bytes = HTML(string=html).write_pdf()
-    return BytesIO(pdf_bytes)
+    output = BytesIO()
+    pisa.CreatePDF(html, dest=output)
+    output.seek(0)
+    return output
 
